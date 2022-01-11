@@ -3,7 +3,6 @@ package controllers
 import (
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 
@@ -22,14 +21,7 @@ func UserIndex(c *gin.Context) {
 
 func UserStore(c *gin.Context) {
 
-	id, err := strconv.Atoi(c.PostForm("id"))
-	if err != nil {
-		c.JSON(400, gin.H{"msg": err})
-		return
-	}
-
 	user := models.User{
-		Id:       uint(id),
 		Username: c.PostForm("username"),
 	}
 
@@ -40,7 +32,10 @@ func UserStore(c *gin.Context) {
 
 	user.SetPassword([]byte(c.PostForm("password")))
 
-	database.DB.Create(&user)
+	if err := database.DB.Create(&user).Error; err != nil {
+		c.JSON(400, gin.H{"msg": "Failed to save data", "error": err})
+		return
+	}
 
 	c.JSON(http.StatusOK, gin.H{"page": "UserStore", "data": user})
 }
@@ -49,7 +44,7 @@ func UserShow(c *gin.Context) {
 
 	var user models.User
 	if err := c.ShouldBindUri(&user); err != nil {
-		c.JSON(400, gin.H{"msg": err})
+		c.JSON(400, gin.H{"msg": &user})
 		return
 	}
 	database.DB.Find(&user)

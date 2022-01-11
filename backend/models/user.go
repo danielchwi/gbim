@@ -1,12 +1,13 @@
 package models
 
 import (
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
 type User struct {
-	Id       uint   `json:"id" uri:"id" binding:"required"`
+	Id       string `json:"id" uri:"id" binding:"required,uuid"`
 	Username string `json:"username" gorm:"unique" form:"Username"`
 	Password []byte `json:"-"`
 }
@@ -33,4 +34,9 @@ func (u User) Count(db *gorm.DB) int64 {
 	var total int64
 	db.Model(u).Count(&total)
 	return total
+}
+
+func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
+	u.Id = uuid.New().String()
+	return
 }
