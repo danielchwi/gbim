@@ -1,10 +1,13 @@
 package main
 
 import (
+	"log"
 	"net/http"
 
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/danielchwi/gbim/backend/controllers"
 	"github.com/danielchwi/gbim/backend/database"
+	"github.com/danielchwi/gbim/backend/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -21,11 +24,14 @@ func setupRouter() *gin.Engine {
 		c.String(http.StatusOK, "pong")
 	})
 
-	r.GET("/users", controllers.UserIndex)
-	r.POST("/user", controllers.UserStore)
-	r.GET("/user/:id", controllers.UserShow)
-	r.PUT("/user/:id", controllers.UserUpdate)
-	r.DELETE("/user/:id", controllers.UserDestroy)
+	// r.POST("/login", controllers.Login)
+	// r.POST("/register", controllers.Register)
+
+	// r.GET("/users", controllers.UserIndex)
+	// r.POST("/user", controllers.UserStore)
+	// r.GET("/user/:id", controllers.UserShow)
+	// r.PUT("/user/:id", controllers.UserUpdate)
+	// r.DELETE("/user/:id", controllers.UserDestroy)
 
 	// Authorized group (uses gin.BasicAuth() middleware)
 	// Same than:
@@ -67,8 +73,39 @@ func setupRouter() *gin.Engine {
 
 func main() {
 	database.Connect()
+	authMiddleware, err := middleware.JwtMiddleware()
+	if err != nil {
+		log.Fatal("JWT Error:" + err.Error())
+	}
+
+	if errInit := authMiddleware.MiddlewareInit(); errInit != nil {
+		log.Fatal("authMiddleware.MiddlewareInit() Error:" + errInit.Error())
+	}
 
 	r := setupRouter()
+
+	r.POST("/login", authMiddleware.LoginHandler)
+
+	r.NoRoute(authMiddleware.MiddlewareFunc(), func(c *gin.Context) {
+		claims := jwt.ExtractClaims(c)
+		log.Printf("NoRoute claims: %#v\n", claims)
+		c.JSON(404, gin.H{"code": "PAGE_NOT_FOUND", "message": "Page not found"})
+	})
+
+	// // Refresh time can be longer than token timeout
+	// auth.GET("/refresh_token", authMiddleware.RefreshHandler)
+	// r.Use(authMiddleware.MiddlewareFunc())
+	// {
+	r.GET("/users", authMiddleware.MiddlewareFunc(), controllers.UserIndex)
+	r.POST("/user", authMiddleware.MiddlewareFunc(), controllers.UserStore)
+	r.GET("/user/:id", authMiddleware.MiddlewareFunc(), controllers.UserShow)
+	r.PUT("/user/:id", authMiddleware.MiddlewareFunc(), controllers.UserUpdate)
+	r.DELETE("/user/:id", authMiddleware.MiddlewareFunc(), controllers.UserDestroy)
+	//}
+
+	//r.POST("/login", controllers.Login)
+	r.POST("/register", controllers.Register)
+
 	// Listen and Server in 0.0.0.0:8080
 	r.Run(":8080")
 }
