@@ -101,6 +101,12 @@ func main() {
 	r.GET("/user/:id", authMiddleware.MiddlewareFunc(), controllers.UserShow)
 	r.PUT("/user/:id", authMiddleware.MiddlewareFunc(), controllers.UserUpdate)
 	r.DELETE("/user/:id", authMiddleware.MiddlewareFunc(), controllers.UserDestroy)
+
+	r.GET("/persons", authMiddleware.MiddlewareFunc(), controllers.PersonIndex)
+	r.POST("/person", authMiddleware.MiddlewareFunc(), controllers.PersonStore)
+	r.GET("/person/:id", authMiddleware.MiddlewareFunc(), controllers.PersonShow)
+	r.PUT("/person/:id", authMiddleware.MiddlewareFunc(), controllers.PersonUpdate)
+	r.DELETE("/person/:id", authMiddleware.MiddlewareFunc(), controllers.PersonDestroy)
 	//}
 
 	//r.POST("/login", controllers.Login)
