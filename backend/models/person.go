@@ -8,11 +8,11 @@ import (
 )
 
 type Person struct {
-	Id         string    `json:"id" uri:"id" binding:"required,uuid"`
+	ID         string    `json:"id" uri:"id" binding:"uuid"`
 	Name       string    `json:"name"`
 	Birthday   time.Time `json:"birthday"`
-	BirthPlace string    `json:"birthPlace"`
-	BaptistDay time.Time `json:"baptistDay"`
+	BirthPlace string    `json:"birth_place"`
+	BaptistDay time.Time `json:"baptist_day"`
 }
 
 func (*Person) Take(db *gorm.DB, offset int, limit int) interface{} {
@@ -30,6 +30,6 @@ func (p Person) Count(db *gorm.DB) int64 {
 }
 
 func (p *Person) BeforeCreate(tx *gorm.DB) (err error) {
-	p.Id = uuid.New().String()
+	p.ID = uuid.New().String()
 	return
 }

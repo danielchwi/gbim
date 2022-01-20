@@ -14,7 +14,7 @@ func UserIndex(c *gin.Context) {
 
 	var users []models.User
 
-	database.DB.Find(&users)
+	database.DB.Preload("Person").Find(&users)
 
 	c.JSON(http.StatusOK, gin.H{"page": "UserIndex", "data": users})
 }
@@ -23,6 +23,7 @@ func UserStore(c *gin.Context) {
 
 	user := models.User{
 		Username: c.PostForm("username"),
+		PersonId: c.PostForm("person_id"),
 	}
 
 	if c.PostForm("password") != c.PostForm("password_confirm") {
@@ -32,7 +33,7 @@ func UserStore(c *gin.Context) {
 
 	user.SetPassword([]byte(c.PostForm("password")))
 
-	if err := database.DB.Create(&user).Error; err != nil {
+	if err := database.DB.Omit("Person").Create(&user).Error; err != nil {
 		c.JSON(400, gin.H{"msg": "Failed to save data", "error": err})
 		return
 	}
@@ -47,7 +48,7 @@ func UserShow(c *gin.Context) {
 		c.JSON(400, gin.H{"msg": &user})
 		return
 	}
-	database.DB.Find(&user)
+	database.DB.Preload("Person").Find(&user)
 
 	c.JSON(http.StatusOK, gin.H{"page": "UserShow", "value": user})
 }
@@ -61,6 +62,7 @@ func UserUpdate(c *gin.Context) {
 	}
 
 	user.Username = c.PostForm("username")
+	user.PersonId = c.PostForm("person_id")
 
 	if c.PostForm("password") != c.PostForm("password_confirm") {
 		c.JSON(400, gin.H{"msg": "password not match"})
@@ -69,7 +71,7 @@ func UserUpdate(c *gin.Context) {
 
 	user.SetPassword([]byte(c.PostForm("password")))
 
-	database.DB.Where("id", user.Id).Updates(&user)
+	database.DB.Omit("Person").Updates(&user)
 
 	c.JSON(http.StatusOK, gin.H{"page": "UserUpdate", "value": user})
 
@@ -83,7 +85,7 @@ func UserDestroy(c *gin.Context) {
 		return
 	}
 	database.DB.Find(&user)
-	database.DB.Delete(user)
+	database.DB.Omit("Person").Delete(user)
 
 	c.JSON(http.StatusOK, gin.H{"page": "UserDestroy", "value": fmt.Sprintf("User %s is deleted!", user.Username)})
 }

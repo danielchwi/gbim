@@ -7,9 +7,11 @@ import (
 )
 
 type User struct {
-	Id       string `json:"id" uri:"id" binding:"required,uuid"`
-	Username string `json:"username" gorm:"unique" form:"Username"`
+	ID       string `json:"id" uri:"id" binding:"required,uuid"`
+	Username string `json:"username" gorm:"unique" form:"username"`
 	Password []byte `json:"-"`
+	PersonId string `json:"person_id" form:"person_id"`
+	Person   Person
 }
 
 func (u *User) SetPassword(password []byte) []byte {
@@ -37,6 +39,6 @@ func (u User) Count(db *gorm.DB) int64 {
 }
 
 func (u *User) BeforeCreate(tx *gorm.DB) (err error) {
-	u.Id = uuid.New().String()
+	u.ID = uuid.New().String()
 	return
 }
